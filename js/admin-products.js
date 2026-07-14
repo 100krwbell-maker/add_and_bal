@@ -12,6 +12,7 @@
 (function () {
   var CHUNK = 500;
   var LIST_LIMIT = 300;   // 목록은 최근 300개만 표시 (상품이 수천 개일 수 있음)
+  var MAX_IMAGES = 8;     // 상품 하나당 저장할 사진 수 상한
 
   var topics = [];        // [{id, name, active, count}]
   var products = [];      // 목록에 보이는 상품 (전체가 아님)
@@ -359,12 +360,13 @@
     var cell = function (r, i) { return i >= 0 ? String(r[i] == null ? '' : r[i]).trim() : ''; };
 
     // 줄들을 상품 단위로 모은다 (그룹 컬럼이 있으면 같은 값끼리 하나로)
+    // 쇼피파이 export는 추가 이미지가 아래 줄들에 있으므로, 그 줄들의 사진을 모두 모은다
     var items = [], byKey = {};
     table.rows.forEach(function (r) {
       var gk = iGroup >= 0 ? cell(r, iGroup) : null;
       var item = gk ? byKey[gk] : null;
       if (!item) {
-        item = { name: '', cost: NaN, image: '', source: '' };
+        item = { name: '', cost: NaN, images: [], source: '' };
         items.push(item);
         if (gk) byKey[gk] = item;
       }
@@ -373,7 +375,10 @@
         var c = num(cell(r, iCost));
         if (isFinite(c) && c > 0) item.cost = c;
       }
-      if (!item.image) item.image = cell(r, iImage);     // 첫 이미지 = 대표 이미지
+      var img = cell(r, iImage);
+      if (img && item.images.indexOf(img) === -1 && item.images.length < MAX_IMAGES) {
+        item.images.push(img);
+      }
       if (!item.source) item.source = cell(r, iSource);
     });
 
@@ -390,14 +395,18 @@
         topic: topic,
         name: it.name,
         cost: it.cost,
-        image_url: it.image || null,
+        image_url: it.images[0] || null,   // 대표 사진
+        images: it.images,                 // 전체 사진 (상세 화면에서 넘겨보기)
         source_url: it.source || null,
       });
     });
 
     renderPreview();
     var notes = [];
-    if (iGroup >= 0) notes.push(table.rows.length + '줄 → 상품 ' + items.length + '개로 합쳤습니다.');
+    if (iGroup >= 0) {
+      var imgTotal = pending.reduce(function (a, p) { return a + p.images.length; }, 0);
+      notes.push(table.rows.length + '줄 → 상품 ' + items.length + '개로 합쳤습니다 (사진 ' + imgTotal + '장).');
+    }
     if (bad) notes.push(bad + '개는 상품명 또는 원가가 없어 제외했습니다.');
     if (dupe) notes.push(dupe + '개는 이미 있는 상품이라 건너뜁니다.');
     warn.textContent = notes.join(' ');
@@ -417,11 +426,13 @@
     document.getElementById('previewCount').textContent =
       '(' + pending.length + '개' + (pending.length > 50 ? ' 중 앞 50개' : '') + ')';
     document.getElementById('previewBody').innerHTML = pending.slice(0, 50).map(function (p) {
+      var extra = p.images && p.images.length > 1
+        ? '<span class="prod-imgcount">+' + (p.images.length - 1) + '</span>' : '';
       var img = p.image_url
-        ? '<img class="prod-thumb" src="' + esc(p.image_url) + '" alt="">'
+        ? '<img class="prod-thumb" src="' + esc(p.image_url) + '" alt="">' + extra
         : '<span class="prod-thumb prod-thumb--empty">?</span>';
       return '<tr>' +
-        '<td>' + img + '</td>' +
+        '<td style="white-space:nowrap;">' + img + '</td>' +
         '<td style="white-space:normal;">' + esc(p.name) + '</td>' +
         '<td>' + money(p.cost) + '</td>' +
         '<td>' + (p.source_url ? '<a href="' + esc(p.source_url) + '" target="_blank">링크</a>' : '-') + '</td>' +

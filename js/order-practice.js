@@ -143,10 +143,12 @@
     for (var i = 0; i < n; i++) {
       var p = pool.splice(Math.floor(Math.random() * pool.length), 1)[0];
       var cost = Number(p.cost) || 0;
+      var imgs = (p.images && p.images.length) ? p.images : (p.image_url ? [p.image_url] : []);
       lines.push({
         pid: p.id,
         name: p.name,
-        image: p.image_url || '',
+        image: imgs[0] || '',    // 목록 썸네일용 대표 사진
+        images: imgs,            // 상세 화면에서 넘겨볼 전체 사진
         sku: randSku(),
         source: p.source_url || '',
         cost: cost,
@@ -296,7 +298,10 @@
       o.risk = o.risk || riskOf(o);
       o.custOrderNo = o.custOrderNo || (Math.random() < 0.55 ? 1 : randInt(2, 4));
       o.gateway = o.gateway || (Math.random() < 0.5 ? 'PayPal Wallet' : 'Shop Pay');
-      (o.lines || []).forEach(function (l) { if (!l.sku) l.sku = randSku(); });
+      (o.lines || []).forEach(function (l) {
+        if (!l.sku) l.sku = randSku();
+        if (!l.images) l.images = l.image ? [l.image] : [];
+      });
       touched = true;
     });
     if (touched) save();

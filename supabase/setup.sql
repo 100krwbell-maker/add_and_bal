@@ -54,7 +54,8 @@ create table if not exists public.products (
   id bigint generated always as identity primary key,
   topic text not null,              -- 주제 (주방용품 / 반려동물 ...) → 사용자가 세팅에서 고르는 단위
   name text not null,
-  image_url text,                   -- 상품 사진 URL
+  image_url text,                   -- 대표 사진 (목록/썸네일용)
+  images jsonb default '[]'::jsonb, -- 상품 사진 전체 (상세 화면에서 넘겨보기)
   cost  numeric(10,2) not null default 0,   -- 아마존 구매 원가
   source_url text,                  -- 원본 상품 링크
   active boolean default true,      -- 끄면 주문 생성에서 제외
@@ -62,6 +63,7 @@ create table if not exists public.products (
 );
 -- (이전 버전 스키마를 이미 실행했다면 아래가 컬럼을 맞춰줌)
 alter table public.products add column if not exists topic text;
+alter table public.products add column if not exists images jsonb default '[]'::jsonb;
 alter table public.products drop column if exists price;
 alter table public.products drop column if exists category;
 create index if not exists products_topic_idx on public.products (topic);
