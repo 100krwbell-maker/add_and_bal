@@ -135,12 +135,33 @@
     return name.toLowerCase().replace(/[^a-z]/g, '') + '@' + rand(MAIL);
   }
 
-  // 주문 한 건의 상품 라인 구성 (상품 1~3종)
+  /* 주문 하나에 담기는 상품 개수(items) 분포 — 실제로는 1개짜리 주문이 대부분이다
+     1개 70% / 2개 15% / 3개 10% / 4개 이상 5% */
+  function rollItemCount() {
+    var r = Math.random();
+    if (r < 0.70) return 1;
+    if (r < 0.85) return 2;
+    if (r < 0.95) return 3;
+    return randInt(4, 6);
+  }
+
+  // 주문 한 건의 상품 라인 구성 — 총 개수를 먼저 뽑고 상품들에 나눠 담는다
   function pickLines(marginPct) {
     var pool = catalog.slice();
-    var n = Math.min(randInt(1, 3), pool.length);
+    var total = rollItemCount();
+
+    // 몇 종류로 나눌지: 같은 상품 여러 개일 수도, 서로 다른 상품일 수도 있다
+    var kinds = 1;
+    if (total > 1) kinds = Math.min(total, randInt(1, 3));
+    kinds = Math.min(kinds, pool.length);
+
+    // 각 종류에 1개씩 배정하고, 남은 개수를 무작위로 더 얹는다
+    var qtys = [];
+    for (var k = 0; k < kinds; k++) qtys.push(1);
+    for (var left = total - kinds; left > 0; left--) qtys[randInt(0, kinds - 1)]++;
+
     var lines = [];
-    for (var i = 0; i < n; i++) {
+    for (var i = 0; i < kinds; i++) {
       var p = pool.splice(Math.floor(Math.random() * pool.length), 1)[0];
       var cost = Number(p.cost) || 0;
       var imgs = (p.images && p.images.length) ? p.images : (p.image_url ? [p.image_url] : []);
@@ -153,7 +174,7 @@
         source: p.source_url || '',
         cost: cost,
         price: round2(cost * (1 + marginPct / 100)),   // 판매가 = 원가 × (1 + 마진/100)
-        qty: Math.random() < 0.75 ? 1 : randInt(2, 3)
+        qty: qtys[i]
       });
     }
     return lines;
