@@ -105,6 +105,78 @@
       .map(function (b) { return b.dataset.ch; });
   }
 
+  /* ---------- 일정 (달력) ---------- */
+  var today = new Date().toISOString().slice(0, 10);
+  var sched = { start: today, end: null, now: true };   // now = 지금 바로 시작
+
+  function fmtK(iso) {
+    var d = new Date(iso + 'T00:00:00');
+    return (d.getMonth() + 1) + '월 ' + d.getDate() + '일';
+  }
+  function schedLabel() {
+    if (sched.now && !sched.end) return '📅 지금 시작';
+    var s = sched.now ? '지금' : fmtK(sched.start);
+    return '📅 ' + s + (sched.end ? ' → ' + fmtK(sched.end) : ' 부터');
+  }
+  function renderSched() {
+    document.getElementById('schedChip').textContent = schedLabel();
+  }
+
+  function openSchedule() {
+    var box = document.createElement('div');
+    box.className = 'modal-overlay is-open';
+    box.innerHTML =
+      '<div class="modal-card" style="max-width:420px;">' +
+        '<div class="modal-card__head">' +
+          '<h3>일정 설정</h3>' +
+          '<button class="modal-close" data-close>×</button>' +
+        '</div>' +
+        '<div class="modal-card__body">' +
+          '<label style="display:flex;gap:8px;align-items:center;margin-bottom:16px;font-size:0.88rem;">' +
+            '<input type="checkbox" id="sNow"' + (sched.now ? ' checked' : '') + '> 지금 바로 시작' +
+          '</label>' +
+          '<div class="field">' +
+            '<label>시작일</label>' +
+            '<input type="date" id="sStart" value="' + sched.start + '" min="' + today + '"' +
+              (sched.now ? ' disabled' : '') + '>' +
+          '</div>' +
+          '<div class="field">' +
+            '<label>종료일 (비우면 계속 진행)</label>' +
+            '<input type="date" id="sEnd" value="' + (sched.end || '') + '" min="' + today + '">' +
+          '</div>' +
+          '<div id="sErr" style="color:var(--danger);font-size:0.82rem;"></div>' +
+        '</div>' +
+        '<div class="modal-card__foot">' +
+          '<button class="btn-sm" data-close>취소</button>' +
+          '<button class="btn-sm is-dark" id="sGo">적용</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(box);
+
+    box.addEventListener('click', function (e) {
+      if (e.target === box || e.target.closest('[data-close]')) box.remove();
+    });
+    box.querySelector('#sNow').addEventListener('change', function () {
+      var st = box.querySelector('#sStart');
+      st.disabled = this.checked;
+      if (this.checked) st.value = today;
+    });
+    box.querySelector('#sGo').addEventListener('click', function () {
+      var now = box.querySelector('#sNow').checked;
+      var start = now ? today : box.querySelector('#sStart').value;
+      var end = box.querySelector('#sEnd').value || null;
+
+      if (!start) { box.querySelector('#sErr').textContent = '시작일을 고르세요.'; return; }
+      if (end && end < start) { box.querySelector('#sErr').textContent = '종료일이 시작일보다 빠릅니다.'; return; }
+
+      sched = { start: start, end: end, now: now };
+      box.remove();
+      renderSched();
+    });
+  }
+
+  document.getElementById('schedChip').addEventListener('click', openSchedule);
+
   /* ---------- 예상 ROAS ----------
      매출/광고비 ≈ 객단가/획득비용. 실제로는 오차가 있으므로 범위로 보여준다. */
   function roasRange(s) {
@@ -224,7 +296,12 @@
       return;
     }
 
-    var days = randInt(4, 12);                       // 지금까지 집행된 일수
+    // 집행 일수: 종료일이 있으면 그 기간, 없으면 지금까지 며칠 돌았다고 가정
+    var days = sched.end
+      ? Math.max(1, Math.round((new Date(sched.end) - new Date(sched.start)) / 86400000))
+      : randInt(4, 12);
+    days = Math.min(days, 30);
+
     var spend = round2(s.budget * days * randF(0.85, 1.05));
     var roas = round2(randF(r[0], r[1]));
     var sales = round2(spend * roas);
@@ -240,9 +317,9 @@
       tov: s.tov,
       cacs: s.cacs,
       channels: s.channels,
-      start: new Date().toISOString().slice(0, 10),
-      end: null,
-      status: 'active',
+      start: sched.start,
+      end: sched.end,
+      status: (sched.end && sched.end <= today) ? 'completed' : 'active',
       spend: spend,
       sales: sales,
       roas: roas,
@@ -271,6 +348,7 @@
       '새 캠페인 ' + String(list.length + 1).padStart(2, '0');
 
     renderSegs();
+    renderSched();
     refresh();
   })();
 })();
