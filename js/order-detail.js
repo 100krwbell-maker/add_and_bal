@@ -143,32 +143,70 @@
       '→ <b>환불하기(주문 취소)</b> 를 하세요.)</span>';
   }
 
-  /* 위험 주문 경고 배너 — Low 면 뜨지 않는다.
-     단서를 대신 짚어주되 결론은 내려주지 않는다 (판단은 수강생 몫) */
-  function riskBanner(o) {
-    if (o.risk !== 'high' && o.risk !== 'medium') return '';
-    var high = o.risk === 'high';
+  /* Order risk 카드의 아이콘을 누르면 뜨는 상세 분석.
+     감지된 신호만 나열하고 결론은 내려주지 않는다 (판단은 수강생 몫) */
+  function riskSignals(o) {
+    var s = [];
+    if (o.billTo && o.billTo !== o.cust) {
+      s.push(['청구지 명의 불일치',
+        '결제한 사람(' + esc(o.billTo) + ')과 받는 사람(' + esc(o.cust) + ')의 이름이 다릅니다. ' +
+        '도난 카드로 결제한 뒤 다른 주소로 받는 전형적인 수법이지만, 선물 주문일 수도 있습니다.']);
+    }
+    if ((o.custOrderNo || 1) === 1) {
+      s.push(['첫 주문 고객',
+        '이 스토어에서 구매 이력이 없는 고객입니다.']);
+    }
+    return s;
+  }
 
-    var clues = [];
-    if (o.billTo && o.billTo !== o.cust) clues.push('청구지 명의(' + esc(o.billTo) + ')가 배송지 이름과 다릅니다');
-    if (o.method === 'Express') clues.push('급행(Express) 배송을 선택했습니다');
-    if (o.grandTotal >= 150) clues.push('결제 금액이 큽니다 (' + money(o.grandTotal) + ')');
-    if ((o.custOrderNo || 1) === 1) clues.push('이 스토어에서 처음 주문한 고객입니다');
+  function openRiskDetail(o) {
+    var lvl = o.risk || 'low';
+    var label = lvl === 'high' ? 'High' : (lvl === 'medium' ? 'Medium' : 'Low');
+    var signals = riskSignals(o);
 
-    return '<div class="risk-banner ' + (high ? 'high' : 'med') + '">' +
-      '<div class="risk-banner__head">' +
-        (high ? '⚠ 차지백 위험이 높은 주문입니다' : '⚠ 차지백 위험이 보통인 주문입니다') +
-      '</div>' +
-      (clues.length
-        ? '<ul class="risk-banner__list">' +
-            clues.map(function (c) { return '<li>' + c + '</li>'; }).join('') +
-          '</ul>'
-        : '') +
-      '<div class="risk-banner__foot">' +
-        '발주하기 전에 확인하세요. 사기 주문을 발주하면 상품과 돈을 모두 잃습니다. ' +
-        '다만 <b>위험도가 높다고 반드시 사기인 것은 아닙니다.</b>' +
-      '</div>' +
-    '</div>';
+    var box = document.createElement('div');
+    box.className = 'modal-overlay is-open';
+    box.innerHTML =
+      '<div class="modal-card">' +
+        '<div class="modal-card__head">' +
+          '<h3>Order risk — ' + label + '</h3>' +
+          '<button class="modal-close" data-close>×</button>' +
+        '</div>' +
+        '<div class="modal-card__body">' +
+          '<div class="od-risk" style="margin-bottom:10px;">' +
+            '<i style="width:' + (lvl === 'high' ? 100 : lvl === 'medium' ? 60 : 28) + '%;' +
+              'background:' + (lvl === 'high' ? '#e03131' : lvl === 'medium' ? '#f59e0b' : '#1aab5b') + ';"></i>' +
+          '</div>' +
+          '<div class="od-risk__labels" style="margin-bottom:18px;">' +
+            '<span' + (lvl === 'low' ? ' class="on"' : '') + '>Low</span>' +
+            '<span' + (lvl === 'medium' ? ' class="on"' : '') + '>Medium</span>' +
+            '<span' + (lvl === 'high' ? ' class="on"' : '') + '>High</span>' +
+          '</div>' +
+
+          (signals.length
+            ? '<div class="risk-sig__title">감지된 신호</div>' +
+              signals.map(function (s) {
+                return '<div class="risk-sig">' +
+                  '<div class="risk-sig__name">⚠ ' + s[0] + '</div>' +
+                  '<div class="risk-sig__desc">' + s[1] + '</div>' +
+                '</div>';
+              }).join('')
+            : '<p class="od-muted" style="margin:0;">특별히 감지된 신호가 없습니다.</p>') +
+
+          '<div class="risk-sig__foot">' +
+            '위험도가 높다고 <b>반드시 사기인 것은 아니고</b>, 낮다고 안전한 것도 아닙니다. ' +
+            '배송지·청구지·연락처를 직접 확인하고 판단하세요.' +
+          '</div>' +
+        '</div>' +
+        '<div class="modal-card__foot">' +
+          '<button class="btn-sm" data-close>닫기</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(box);
+
+    box.addEventListener('click', function (ev) {
+      if (ev.target === box || ev.target.closest('[data-close]')) box.remove();
+    });
   }
 
   // 헤더 옆 리스크 뱃지 — Low 는 표시하지 않는다
@@ -188,7 +226,9 @@
         ? '차지백 위험이 보통입니다. 발주하기 전에 주문을 검토하세요.'
         : '차지백 위험이 낮습니다. 발주해도 됩니다.';
     return '<div class="od-card">' +
-      '<div class="od-card__head">Order risk</div>' +
+      '<div class="od-card__head od-card__head--icon">Order risk' +
+        '<button class="risk-info" id="btnRisk" title="위험 신호 자세히 보기">🔍</button>' +
+      '</div>' +
       '<div class="od-card__body">' +
         '<div class="od-risk"><i style="width:' + pct + '%;background:' + color + ';"></i></div>' +
         '<div class="od-risk__labels"><span' + (lvl === 'low' ? ' class="on"' : '') + '>Low</span>' +
@@ -257,7 +297,6 @@
         '</div>' +
       '</div>' +
       '<div class="od-sub">' + fmtFull(o.ts) + ' from ' + esc(o.channel) + '</div>' +
-      riskBanner(o) +
 
       '<div class="od-grid">' +
         // ===== 왼쪽 =====
@@ -347,6 +386,9 @@
 
     var r = document.getElementById('btnRefund');
     if (r) r.addEventListener('click', function () { openRefund(o); });
+
+    var rk = document.getElementById('btnRisk');
+    if (rk) rk.addEventListener('click', function () { openRiskDetail(o); });
 
     // 고객에게 문의 → 답장이 도착 (이미 정해져 있던 답장이 드러남)
     var a = document.getElementById('btnAsk');
