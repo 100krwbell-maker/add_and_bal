@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>어드민 · 상품 관리</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body data-area="admin" data-active="products">
+<div class="layout">
+  <div id="sidebar"></div>
+  <main class="content">
+    <div class="page-head">
+      <h2>상품 관리</h2>
+      <p>주제별로 상품 CSV를 등록합니다. 수강생이 발주 연습 세팅에서 주제를 고르면, 그 주제의 상품으로 주문이 랜덤 생성됩니다.</p>
+    </div>
+
+    <div class="panel">
+      <div class="panel__head">
+        <span>상품 가져오기 (CSV / 엑셀 붙여넣기)</span>
+        <span style="font-size:0.8rem;color:var(--muted);">
+          컬럼이 많아도 됩니다 — 쓸 컬럼만 아래에서 골라주세요
+        </span>
+      </div>
+      <div style="padding:20px 24px;">
+        <div class="prod-form">
+          <div class="field">
+            <label>주제</label>
+            <input type="text" id="fTopic" list="topicList" placeholder="주방용품">
+            <datalist id="topicList"></datalist>
+            <div class="field-hint">같은 주제로 여러 번 나눠 올려도 됩니다 (기존 상품에 더해집니다).</div>
+          </div>
+          <div class="field">
+            <label>CSV / TSV 파일</label>
+            <input type="file" id="fCsv" accept=".csv,.tsv,.txt,text/csv">
+            <div class="field-hint">엑셀에서 <b>다른 이름으로 저장 → CSV UTF-8</b> 로 저장한 파일.</div>
+          </div>
+        </div>
+
+        <details style="margin-bottom:16px;">
+          <summary style="cursor:pointer;font-size:0.85rem;font-weight:700;">
+            파일이 안 열리나요? 엑셀에서 복사해 그대로 붙여넣기
+          </summary>
+          <textarea id="pasteText" rows="5" placeholder="엑셀에서 표(헤더 포함)를 드래그해 복사(Ctrl+C)한 뒤 여기에 붙여넣기(Ctrl+V) 하세요."
+            style="width:100%;margin-top:10px;padding:12px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:0.85rem;resize:vertical;"></textarea>
+          <button class="btn-sm" id="pasteBtn" style="margin-top:8px;">붙여넣은 내용 읽기</button>
+        </details>
+
+        <div id="mapBox" hidden>
+          <div style="font-size:0.85rem;font-weight:700;margin-bottom:10px;">
+            컬럼 연결 <span style="color:var(--muted);font-weight:600;">— 파일에서 읽은 컬럼 중 무엇을 쓸지 고르세요</span>
+          </div>
+          <div class="prod-form">
+            <div class="field">
+              <label>상품명 <span style="color:var(--danger);">*</span></label>
+              <select id="mapName"></select>
+            </div>
+            <div class="field">
+              <label>원가 ($) <span style="color:var(--danger);">*</span></label>
+              <select id="mapCost"></select>
+            </div>
+            <div class="field">
+              <label>이미지 URL</label>
+              <select id="mapImage"></select>
+            </div>
+            <div class="field">
+              <label>원본 링크</label>
+              <select id="mapSource"></select>
+            </div>
+          </div>
+          <label style="display:inline-flex;align-items:center;gap:7px;font-size:0.85rem;">
+            <input type="checkbox" id="skipDupe" checked>
+            같은 주제에 이미 있는 상품명은 건너뛰기
+          </label>
+        </div>
+
+        <div id="preview" hidden style="margin-top:16px;">
+          <div style="font-size:0.85rem;font-weight:700;margin-bottom:8px;">
+            미리보기 <span id="previewCount" style="color:var(--muted);font-weight:600;"></span>
+          </div>
+          <div class="ord-scroll" style="border:1px solid var(--border);border-radius:8px;max-height:280px;overflow-y:auto;">
+            <table class="ord-table">
+              <thead><tr><th>사진</th><th>상품명</th><th>원가</th><th>링크</th></tr></thead>
+              <tbody id="previewBody"></tbody>
+            </table>
+          </div>
+          <div id="previewWarn" style="font-size:0.82rem;color:var(--warn);margin-top:8px;"></div>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:12px;margin-top:16px;">
+          <button class="btn-primary" id="uploadBtn" disabled>등록하기</button>
+          <span style="font-size:0.82rem;color:var(--muted);" id="uploadMsg"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel__head">
+        <span>상품 하나만 추가</span>
+      </div>
+      <div style="padding:20px 24px;">
+        <div class="prod-form">
+          <div class="field">
+            <label>주제</label>
+            <input type="text" id="sTopic" list="topicList" placeholder="주방용품">
+          </div>
+          <div class="field">
+            <label>상품명</label>
+            <input type="text" id="sName" placeholder="Silicone Spatula Set, 6-Piece">
+          </div>
+          <div class="field">
+            <label>이미지 URL</label>
+            <input type="text" id="sImage" placeholder="https://... (사진 우클릭 → 이미지 주소 복사)">
+          </div>
+          <div class="field">
+            <label>원가 ($) — 아마존 구매가</label>
+            <input type="number" id="sCost" step="0.01" min="0" placeholder="12.80">
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <button class="btn-sm is-primary" id="addBtn">추가</button>
+          <span class="form-saved" id="addMsg" hidden>추가되었습니다</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel__head">
+        <span>등록된 상품 <span id="pCount" style="color:var(--muted);font-weight:600;"></span></span>
+        <select id="topicFilter" style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;font-size:0.85rem;">
+          <option value="">전체 주제</option>
+        </select>
+      </div>
+      <table>
+        <thead>
+          <tr><th>사진</th><th>주제</th><th>상품명</th><th>원가</th><th>사용</th><th>관리</th></tr>
+        </thead>
+        <tbody id="prodBody">
+          <tr><td colspan="6" style="text-align:center;color:var(--muted);padding:40px;">불러오는 중...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../js/supabase.js"></script>
+<script src="../js/layout.js"></script>
+<script src="../js/auth.js"></script>
+<script src="../js/admin-products.js"></script>
+</body>
+</html>

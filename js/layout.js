@@ -26,6 +26,7 @@
         { key: 'registrants', ico: '🙋', label: '가입자 관리',  href: 'registrants.html' },
         { key: 'users',       ico: '👥', label: '사용자 관리',  href: 'users.html' },
         { key: 'review',      ico: '📝', label: '자료 검수',    href: 'review.html' },
+        { key: 'products',    ico: '🛍️', label: '상품 관리',    href: 'products.html' },
         { key: 'results',     ico: '📊', label: '결과 관리',    href: 'results.html' },
       ],
       footer: '<div class="who">GSK Admin <span class="badge-admin">관리자</span></div><a href="../index.html">사용자 화면으로</a>',

@@ -10,28 +10,77 @@
 <div class="layout">
   <div id="sidebar"></div>
   <main class="content">
-    <div class="page-head">
-      <h2>발주 연습하기</h2>
-      <p>세팅한 조건에 따라 들어온 주문을 발주 처리하고 차지백을 실습합니다.</p>
+    <div class="page-head" style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;">
+      <div>
+        <h2>발주 연습하기</h2>
+        <p>들어온 주문을 확인하고 발주를 처리하세요. ·
+          <a href="#" style="color:var(--primary);">발주 매뉴얼</a> ·
+          <a href="#" style="color:var(--primary);">차지백 매뉴얼</a>
+        </p>
+      </div>
+      <div style="display:flex;gap:8px;flex-shrink:0;">
+        <button class="btn-sm" id="resetBtn">초기화</button>
+        <button class="btn-primary" id="receiveBtn" style="padding:10px 18px;">＋ 주문 받기</button>
+      </div>
     </div>
 
-    <div class="guide">
-      <h3>가이드 매뉴얼</h3>
-      <ol>
-        <li>발주 매뉴얼: <a href="#">링크</a></li>
-        <li>차지백 매뉴얼: <a href="#">링크</a></li>
-      </ol>
+    <!-- 상단 지표 -->
+    <div class="ord-metrics">
+      <div class="ord-metrics__today">📅 오늘</div>
+      <div class="ord-metric">
+        <div class="l">미처리 주문</div>
+        <div class="v" id="mOpen">0</div>
+      </div>
+      <div class="ord-metric">
+        <div class="l">처리 완료 주문</div>
+        <div class="v" id="mDone">0</div>
+      </div>
+      <div class="ord-metric">
+        <div class="l">차지백 비율</div>
+        <div class="v" id="mCb">0<small>%</small></div>
+      </div>
+      <div class="ord-metric">
+        <div class="l">환불 비율</div>
+        <div class="v" id="mRefund">0<small>%</small></div>
+      </div>
+      <div class="ord-metric">
+        <div class="l">진행도</div>
+        <div class="v" id="mProgress">0<small>%</small></div>
+        <div class="bar"><i id="mBar" style="width:0%"></i></div>
+      </div>
     </div>
 
-    <div class="work-area">
-      발주 영역 (추후 구현)
+    <!-- 주문 표 -->
+    <div class="ord-panel">
+      <div class="ord-toolbar">
+        <span class="ord-tab">All</span>
+        <span class="ord-search">🔍 Search and filter</span>
+      </div>
+      <div class="ord-head2">
+        <span>Orders</span>
+        <span style="font-weight:600;color:var(--muted);font-size:0.82rem;" id="ordCount"></span>
+      </div>
+      <div class="ord-scroll">
+        <table class="ord-table">
+          <thead>
+            <tr>
+              <th>Order</th><th>Date</th><th>Customer</th><th>Channel</th>
+              <th>Total</th><th>Payment status</th><th>Fulfillment status</th>
+              <th>Items</th><th>Delivery method</th><th>Tags</th>
+            </tr>
+          </thead>
+          <tbody id="ordBody"></tbody>
+        </table>
+      </div>
     </div>
   </main>
 </div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/supabase.js"></script>
 <script src="js/layout.js"></script>
 <script src="js/auth.js"></script>
+<script src="js/order-practice.js"></script>
 <script>Auth.require();</script>
 </body>
 </html>

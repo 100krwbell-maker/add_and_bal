@@ -19,11 +19,7 @@
       <div class="form-row">
         <label for="topic">주제 선택</label>
         <select id="topic">
-          <option value="">선택하세요</option>
-          <option>주방용품</option>
-          <option>반려동물</option>
-          <option>홈 인테리어</option>
-          <option>패션 잡화</option>
+          <option value="">불러오는 중...</option>
         </select>
         <div class="hint">제한된 주제로 임시 주문이 들어옵니다. 주제에 맞춰 진행하세요.</div>
       </div>
@@ -33,7 +29,10 @@
         <span class="input-unit" data-unit="%">
           <input id="margin" type="number" min="0" max="100" step="1" inputmode="numeric" placeholder="예: 20">
         </span>
-        <div class="hint">숫자만 입력하면 단위(%)는 자동으로 적용됩니다. 발주 완료 후 결과에서 총 수익 계산에 사용됩니다.</div>
+        <div class="hint">
+          판매가 = 아마존 원가 × (1 + 마진/100). 예를 들어 원가 $10 상품에 마진 20%면 고객은 $12에 삽니다.
+          간혹 마진이 거의 없거나 역마진인 함정 주문이 섞여 들어옵니다.
+        </div>
       </div>
 
       <div class="form-row">
@@ -52,10 +51,17 @@
         </select>
         <div class="hint">
           난이도가 높을수록 사기 주문 · 역마진 · 정보 누락 등 다양한 케이스의 출몰 빈도가 증가합니다.
+          (하 15% · 중 25% · 상 35% 확률로 사기 주문)
         </div>
       </div>
 
-      <button class="btn-primary" type="submit">세팅 저장하고 발주 연습 시작</button>
+      <div style="display:flex;align-items:center;gap:14px;">
+        <button class="btn-primary" type="submit" id="startBtn">세팅 저장하고 발주 연습 시작</button>
+        <span class="form-saved" id="saved" hidden>저장되었습니다</span>
+      </div>
+      <p style="color:var(--muted);font-size:0.82rem;margin-top:14px;">
+        ⚠️ 세팅을 저장하면 이번 연습의 주문 시나리오가 새로 만들어지고, 지금까지 받은 주문은 초기화됩니다.
+      </p>
     </form>
   </main>
 </div>
@@ -63,6 +69,6 @@
 <script src="js/supabase.js"></script>
 <script src="js/layout.js"></script>
 <script src="js/auth.js"></script>
-<script>Auth.require();</script>
+<script src="js/order-setup.js"></script>
 </body>
 </html>

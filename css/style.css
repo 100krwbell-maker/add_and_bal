@@ -596,10 +596,105 @@ tbody tr:hover { background: #fafbff; }
 .auth-msg { min-height: 20px; font-size: 0.82rem; color: var(--danger); margin-bottom: 8px; text-align: center; }
 .auth-msg.ok { color: var(--ok); }
 
+/* =========================================================
+   발주 연습 — 주문 목록 (쇼피파이 스타일)
+   ========================================================= */
+/* 상단 지표 바 */
+.ord-metrics {
+  display: flex;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #fff;
+  overflow: hidden;
+  margin-bottom: 18px;
+}
+.ord-metrics__today {
+  display: flex; align-items: center; gap: 6px;
+  padding: 16px 18px;
+  border-right: 1px solid var(--border);
+  font-weight: 600; font-size: 0.85rem; white-space: nowrap;
+}
+.ord-metric {
+  flex: 1; padding: 14px 18px;
+  border-right: 1px solid var(--border);
+  min-width: 0;
+}
+.ord-metric:last-child { border-right: none; }
+.ord-metric .l { font-size: 0.76rem; color: var(--muted); margin-bottom: 8px; white-space: nowrap; }
+.ord-metric .v { font-size: 1.2rem; font-weight: 800; }
+.ord-metric .v small { font-size: 0.75rem; font-weight: 600; color: var(--muted); }
+.ord-metric .bar { margin-top: 10px; height: 6px; border-radius: 4px; background: #eef1f5; overflow: hidden; }
+.ord-metric .bar > i { display: block; height: 100%; background: var(--primary); transition: width 0.3s; }
+
+/* 주문 표 패널 */
+.ord-panel { border: 1px solid var(--border); border-radius: 12px; background: #fff; overflow: hidden; }
+.ord-toolbar { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--border); }
+.ord-tab { font-weight: 700; font-size: 0.82rem; border: 1px solid var(--border); border-radius: 8px; padding: 5px 12px; }
+.ord-search { flex: 1; color: var(--muted); font-size: 0.85rem; background: #f6f7f9; border-radius: 8px; padding: 8px 12px; }
+.ord-head2 { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--border); font-weight: 700; font-size: 0.9rem; }
+
+.ord-scroll { overflow-x: auto; }
+.ord-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+.ord-table th {
+  text-align: left; padding: 10px 12px;
+  background: #f6f7f9; color: var(--muted); font-weight: 600; white-space: nowrap;
+  border-bottom: 1px solid var(--border);
+}
+.ord-table td { padding: 11px 12px; border-bottom: 1px solid #f0f2f5; white-space: nowrap; }
+.ord-table tbody tr { cursor: pointer; }
+.ord-table tbody tr:hover { background: #fafbfd; }
+.ord-table tbody tr.is-done td { color: #98a0ac; }
+.ord-table tbody tr.is-refunded td { color: #b6bcc6; text-decoration: line-through; }
+.ord-no { font-weight: 700; color: var(--primary); }
+.ord-table tr.is-done .ord-no,
+.ord-table tr.is-refunded .ord-no { color: #98a0ac; }
+.ord-cust { font-weight: 600; }
+
+/* 상태 뱃지 */
+.ord-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 0.74rem; font-weight: 600;
+  padding: 2px 9px; border-radius: 8px;
+  background: #e6e9ed; color: #4a5160; white-space: nowrap;
+}
+.ord-badge .dot { width: 8px; height: 8px; border-radius: 50%; background: #9aa2ad; }
+.ord-badge.attn { background: #ffe9a8; color: #7a5c00; }
+.ord-badge.attn .dot { background: transparent; border: 2px solid #d99f00; }
+.ord-chip {
+  display: inline-block; font-size: 0.72rem;
+  border: 1px solid var(--border); border-radius: 6px;
+  padding: 2px 7px; color: #4a5160; background: #fff; margin-left: 3px;
+}
+
+/* 주문 목록 안의 상품 사진 */
+.ord-items { display: inline-flex; align-items: center; gap: 6px; }
+.ord-thumb {
+  width: 26px; height: 26px; border-radius: 5px; object-fit: cover;
+  border: 1px solid var(--border); background: #f6f7f9; flex-shrink: 0;
+}
+.ord-thumb--empty {
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 0.7rem; color: var(--muted);
+}
+
+/* 어드민 · 상품 관리 */
+.prod-form { display: grid; grid-template-columns: 1fr 1fr; gap: 0 20px; }
+.prod-thumb {
+  width: 44px; height: 44px; border-radius: 7px; object-fit: cover;
+  border: 1px solid var(--border); background: #f6f7f9;
+}
+.prod-thumb--empty {
+  display: inline-flex; align-items: center; justify-content: center;
+  color: var(--muted); font-weight: 700;
+}
+
 /* 반응형 */
 @media (max-width: 900px) {
+  .ord-metrics { flex-wrap: wrap; }
+  .ord-metrics__today, .ord-metric { flex: 1 1 45%; border-bottom: 1px solid var(--border); }
   .layout { grid-template-columns: 1fr; }
   .sidebar { flex-direction: row; overflow-x: auto; align-items: center; }
   .card-grid, .submit-grid { grid-template-columns: 1fr; }
+  .prod-form { grid-template-columns: 1fr; }
   .content { padding: 24px 20px; }
 }

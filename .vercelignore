@@ -1,0 +1,6 @@
+# Vercel 배포 시 올리지 않을 파일 (웹과 무관하거나 공개 불필요)
+serve.ps1
+_backup_숫자야구.html
+supabase/
+.claude/
+README.md
