@@ -44,6 +44,10 @@
   // 배송 불가/고비용 지역
   var NO_SHIP = [['Anchorage','AK'],['Honolulu','HI'],['Juneau','AK'],['San Juan','PR'],['APO','AE'],['FPO','AP']];
 
+  var MAIL = ['gmail.com', 'yahoo.com', 'sbcglobal.net', 'outlook.com', 'aol.com', 'icloud.com'];
+  var SHIP_FEE = { Economy: 4.90, Standard: 7.90, Express: 14.90 };
+  var TAX_RATE = 0.0825;
+
   var FIRST = ['James','Mary','Robert','Patricia','John','Jennifer','Michael','Linda','David','Elizabeth',
     'William','Barbara','Richard','Susan','Joseph','Jessica','Thomas','Sarah','Charles','Karen',
     'Christopher','Nancy','Daniel','Lisa','Matthew','Betty','Anthony','Sandra','Mark','Ashley',
@@ -120,6 +124,17 @@
     return slots;
   }
 
+  // 아마존 ASIN 같은 상품 코드 (주문 상세 화면에 표시)
+  function randSku() {
+    var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    var s = 'B0';
+    for (var i = 0; i < 8; i++) s += chars[Math.floor(Math.random() * chars.length)];
+    return s;
+  }
+  function emailOf(name) {
+    return name.toLowerCase().replace(/[^a-z]/g, '') + '@' + rand(MAIL);
+  }
+
   // 주문 한 건의 상품 라인 구성 (상품 1~3종)
   function pickLines(marginPct) {
     var pool = catalog.slice();
@@ -132,12 +147,22 @@
         pid: p.id,
         name: p.name,
         image: p.image_url || '',
+        sku: randSku(),
+        source: p.source_url || '',
         cost: cost,
         price: round2(cost * (1 + marginPct / 100)),   // 판매가 = 원가 × (1 + 마진/100)
         qty: Math.random() < 0.75 ? 1 : randInt(2, 3)
       });
     }
     return lines;
+  }
+
+  /* 쇼피파이의 Order risk — 사기 주문일수록 높게 나오지만 100% 정답표는 아니다.
+     (정상인데 Medium이 뜨기도 하고, 사기인데 Low로 깔리기도 함 → 리스크만 보고 판단하면 틀림) */
+  function riskOf(o) {
+    var r = Math.random();
+    if (o.issue === 'chargeback') return r < 0.55 ? 'high' : (r < 0.85 ? 'medium' : 'low');
+    return r < 0.82 ? 'low' : (r < 0.97 ? 'medium' : 'high');
   }
 
   // 사기 슬롯마다 어떤 종류의 문제를 넣을지 — 4종이 고르게 나오도록 섞어서 순서대로 배정
@@ -198,6 +223,15 @@
       // 선물 주문 등 정상인데도 청구지 명의가 다른 경우 (차지백 단서가 100% 확정이 되지 않도록)
       if (!o.issue && Math.random() < 0.05) o.billTo = randName();
 
+      // 주문 상세 화면에 필요한 값들 (배송비·세금·결제 총액·리스크)
+      o.email = emailOf(o.cust);
+      o.shipping = SHIP_FEE[o.method] || 4.90;
+      o.tax = round2(o.total * TAX_RATE);
+      o.grandTotal = round2(o.total + o.shipping + o.tax);   // 고객이 실제로 결제한 금액
+      o.risk = riskOf(o);
+      o.custOrderNo = Math.random() < 0.55 ? 1 : randInt(2, 4);   // 이 고객의 몇 번째 주문인지
+      o.gateway = Math.random() < 0.5 ? 'PayPal Wallet' : 'Shop Pay';
+
       queue.push(o);
     }
     return { sig: sig, queue: queue, total: n, nextNo: no };
@@ -245,8 +279,27 @@
       if (!p || p.sig !== sig) return false;          // 세팅이 바뀌었으면 시나리오를 새로 짬
       plan = p;
       orders = JSON.parse(localStorage.getItem(ORDERS)) || [];
+      backfill();                                     // 상세 화면용 필드가 없던 옛 주문 보정
       return true;
     } catch (e) { return false; }
+  }
+
+  // 주문 상세 화면이 생기기 전에 만들어진 주문에는 배송비·세금·리스크 등이 없다 → 채워 넣는다
+  function backfill() {
+    var touched = false;
+    [].concat(orders, plan.queue).forEach(function (o) {
+      if (o.grandTotal != null) return;
+      o.email = o.email || emailOf(o.cust);
+      o.shipping = SHIP_FEE[o.method] || 4.90;
+      o.tax = round2(o.total * TAX_RATE);
+      o.grandTotal = round2(o.total + o.shipping + o.tax);
+      o.risk = o.risk || riskOf(o);
+      o.custOrderNo = o.custOrderNo || (Math.random() < 0.55 ? 1 : randInt(2, 4));
+      o.gateway = o.gateway || (Math.random() < 0.5 ? 'PayPal Wallet' : 'Shop Pay');
+      (o.lines || []).forEach(function (l) { if (!l.sku) l.sku = randSku(); });
+      touched = true;
+    });
+    if (touched) save();
   }
 
   /* ---------- 렌더 ---------- */
@@ -298,12 +351,12 @@
         '아직 주문이 없습니다. 우측 상단 <b>[＋ 주문 받기]</b> 를 눌러 주문을 받아보세요.</td></tr>';
     } else {
       body.innerHTML = orders.map(function (o) {
-        return '<tr class="' + rowClass(o) + '">' +
+        return '<tr class="' + rowClass(o) + '" data-no="' + esc(o.no) + '">' +
           '<td class="ord-no">' + esc(o.no) + '</td>' +
           '<td>' + esc(o.date) + '</td>' +
           '<td>' + custHtml(o) + '</td>' +
           '<td>' + esc(o.channel) + '</td>' +
-          '<td>' + money(o.total) + '</td>' +
+          '<td>' + money(o.grandTotal != null ? o.grandTotal : o.total) + '</td>' +
           '<td>' + paymentBadge(o.payment) + '</td>' +
           '<td>' + fulfillBadge(o.fulfillment) + '</td>' +
           '<td>' + itemsHtml(o) + '</td>' +
@@ -372,11 +425,11 @@
     render();
   });
 
-  // 행 클릭 → (추후) 주문 상세/발주 처리 화면 연결 예정
+  // 행 클릭 → 주문 상세 화면
   document.getElementById('ordBody').addEventListener('click', function (e) {
-    var tr = e.target.closest('tr');
+    var tr = e.target.closest('tr[data-no]');
     if (!tr) return;
-    // TODO: 주문 상세 페이지로 이동 (다음 단계)
+    location.href = 'order-detail.html?no=' + encodeURIComponent(tr.dataset.no);
   });
 
   function needSetup(msg) {
