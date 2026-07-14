@@ -12,7 +12,9 @@
    ========================================================= */
 (function () {
   var STORE = 'ad_campaigns';
-  var TERMS = ['3 months', '6 months', '12 months'];   // 이탈 고객은 기간별로 따로 걸 수 있다
+  // 이탈 고객은 기간별로 따로 걸 수 있다 (1~12개월)
+  var TERMS = [];
+  for (var m = 1; m <= 12; m++) TERMS.push(m + (m === 1 ? ' month' : ' months'));
 
   /* 세그먼트 우선순위 목록 (전체 고객은 항상 있으므로 여기 없음)
      - new    : 신규 고객 (하나만)
