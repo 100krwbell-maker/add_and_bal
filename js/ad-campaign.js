@@ -18,8 +18,8 @@
      - new    : 신규 고객 (하나만)
      - lapsed : 이탈 고객 (기간별로 여러 개 가능 — 3개월 이탈과 6개월 이탈에 다른 비용) */
   var segs = [
-    { type: 'new', cac: 38.31 },
-    { type: 'lapsed', term: '3 months', cac: 38.31 },
+    { type: 'new', cac: 0 },
+    { type: 'lapsed', term: '3 months', cac: 0 },
   ];
 
   function usedTerms() {
@@ -288,11 +288,11 @@
     var add = e.target.closest('[data-add]');
     if (add) {
       if (add.dataset.add === 'new') {
-        segs.unshift({ type: 'new', cac: 38.31 });
+        segs.unshift({ type: 'new', cac: 0 });
       } else {
         var t = freeTerms()[0];                        // 아직 안 쓴 기간을 자동으로 잡아줌
         if (!t) return;
-        segs.push({ type: 'lapsed', term: t, cac: 38.31 });
+        segs.push({ type: 'lapsed', term: t, cac: 0 });
       }
       renderSegs();
       refresh();
@@ -323,15 +323,21 @@
   });
 
   document.getElementById('resetBtn').addEventListener('click', function () {
-    document.getElementById('cacAll').value = 30.65;
-    document.getElementById('tov').value = 76.62;
-    document.getElementById('budget').value = 765;
+    document.getElementById('cacAll').value = 0;
+    document.getElementById('tov').value = 0;
+    document.getElementById('budget').value = 0;
     segs = [
-      { type: 'new', cac: 38.31 },
-      { type: 'lapsed', term: '3 months', cac: 38.31 },
+      { type: 'new', cac: 0 },
+      { type: 'lapsed', term: '3 months', cac: 0 },
     ];
     renderSegs();
     refresh();
+  });
+
+  // 금액 박스는 어디를 눌러도 숫자 입력으로 포커스가 간다
+  document.addEventListener('click', function (e) {
+    var box = e.target.closest('.cac-row__input');
+    if (box && e.target.tagName !== 'INPUT') box.querySelector('input').focus();
   });
 
   /* ---------- 캠페인 시작 ----------

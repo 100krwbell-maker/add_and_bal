@@ -831,13 +831,21 @@ tbody tr:hover { background: #fafbff; }
 .cac-row__input {
   display: inline-flex; align-items: center; gap: 4px;
   border: 1px solid var(--border); border-radius: 8px; padding: 0 10px; background: #fff;
+  cursor: text;                 /* 박스 어디를 눌러도 입력으로 들어간다 */
+  min-width: 130px;
 }
-.cac-row__unit { color: var(--muted); font-size: 0.85rem; }
+.cac-row__unit { color: var(--muted); font-size: 0.85rem; flex-shrink: 0; }
 .cac-row__input input {
-  width: 90px; border: none; padding: 9px 0; font-size: 0.88rem; text-align: right;
+  flex: 1; width: 100%; min-width: 0;
+  border: none; padding: 9px 0; font-size: 0.88rem; text-align: right; background: none;
 }
 .cac-row__input input:focus { outline: none; }
 .cac-row__input:focus-within { border-color: var(--primary); }
+
+/* 숫자 입력의 위아래 화살표(스피너) 제거 — 실수로 값이 바뀌는 걸 막는다 */
+input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 .cac-row__term, .cac-row__country {
   border: 1px solid var(--border); border-radius: 8px;
   padding: 7px 9px; font-size: 0.82rem; background: #f6f7f9;
