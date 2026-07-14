@@ -352,7 +352,7 @@
   function render() {
     var body = document.getElementById('ordBody');
     if (!orders.length) {
-      body.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--muted);padding:48px;">' +
+      body.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:48px;">' +
         '아직 주문이 없습니다. 우측 상단 <b>[＋ 주문 받기]</b> 를 눌러 주문을 받아보세요.</td></tr>';
     } else {
       body.innerHTML = orders.map(function (o) {
@@ -360,7 +360,6 @@
           '<td class="ord-no">' + esc(o.no) + '</td>' +
           '<td>' + esc(o.date) + '</td>' +
           '<td>' + custHtml(o) + '</td>' +
-          '<td>' + esc(o.channel) + '</td>' +
           '<td>' + money(o.grandTotal != null ? o.grandTotal : o.total) + '</td>' +
           '<td>' + paymentBadge(o.payment) + '</td>' +
           '<td>' + fulfillBadge(o.fulfillment) + '</td>' +
@@ -439,7 +438,7 @@
 
   function needSetup(msg) {
     document.getElementById('ordBody').innerHTML =
-      '<tr><td colspan="10" style="text-align:center;color:var(--muted);padding:48px;">' + msg +
+      '<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:48px;">' + msg +
       '<br><br><a class="btn-primary" href="order-setup.html" style="text-decoration:none;padding:9px 16px;">발주 연습 세팅하러 가기</a>' +
       '</td></tr>';
     document.getElementById('receiveBtn').disabled = true;
